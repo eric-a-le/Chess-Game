@@ -65,7 +65,9 @@ class GameController(ChessController):
 
     def handle_mouse_down(self, mouse_pos):
         if self.board.promotion_pending:
-            choice = self.view.get_promotion_choice(mouse_pos, self.board.promotion_pending[2])
+            choice = self.view.get_promotion_choice(
+                mouse_pos, self.board.promotion_pending[2]
+            )
             if choice is not None:
                 self.board.promote_pawn(choice)
                 if self.board.mode == "one_player" and self.board.turn == "b":
@@ -143,10 +145,17 @@ class GameController(ChessController):
                 if self.board.promotion_pending:
                     return
 
+                if self.board.check_game_end():
+                    self._state = "game_over"
+                    return
+
                 if self.board.mode == "one_player" and self.board.turn == "b":
                     pygame.display.flip()
                     pygame.time.wait(150)
                     self.board.apply_stockfish_move()
+
+                    if self.board.check_game_end():
+                        self._state = "game_over"
                 return
 
         self.board.clear_drag()
@@ -162,14 +171,33 @@ class GameController(ChessController):
                     sys.exit()
 
                 if self._state in ("menu", "difficulty_menu"):
-                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if (
+                        event.type == pygame.MOUSEBUTTONDOWN
+                        and event.button == 1
+                    ):
                         self.handle_menu_click(event.pos)
 
+                elif self._state == "game_over":
+                    if (
+                        event.type == pygame.MOUSEBUTTONDOWN
+                        and event.button == 1
+                    ):
+                        if self.view.game_over_back_rect.collidepoint(
+                            event.pos
+                        ):
+                            self._state = "menu"
+
                 elif self._state == "game":
-                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if (
+                        event.type == pygame.MOUSEBUTTONDOWN
+                        and event.button == 1
+                    ):
                         self.handle_mouse_down(event.pos)
 
-                    elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+                    elif (
+                        event.type == pygame.MOUSEBUTTONDOWN
+                        and event.button == 3
+                    ):
                         if self.board.mode == "sandbox":
                             board_pos = self.view.pixel_to_board(event.pos)
                             if board_pos is not None:
@@ -179,7 +207,9 @@ class GameController(ChessController):
                     elif event.type == pygame.MOUSEMOTION:
                         self.handle_mouse_motion(event.pos)
 
-                    elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                    elif (
+                        event.type == pygame.MOUSEBUTTONUP and event.button == 1
+                    ):
                         self.handle_mouse_up(event.pos)
 
                     elif event.type == pygame.KEYDOWN:
@@ -193,6 +223,8 @@ class GameController(ChessController):
                 self.view.draw_menu()
             elif self._state == "difficulty_menu":
                 self.view.draw_difficulty_menu()
+            elif self._state == "game_over":
+                self.view.draw_game_over()
             else:
                 self.view.display()
 

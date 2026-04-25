@@ -71,10 +71,18 @@ class PygameChessView(ChessView):
         button_w = min(340, self.WIDTH - 120)
         button_h = 60
         self.menu_buttons = {
-            "one_player": pygame.Rect(center_x - button_w // 2, 220, button_w, button_h),
-            "two_player": pygame.Rect(center_x - button_w // 2, 310, button_w, button_h),
-            "chess960": pygame.Rect(center_x - button_w // 2, 400, button_w, button_h),
-            "sandbox": pygame.Rect(center_x - button_w // 2, 490, button_w, button_h),
+            "one_player": pygame.Rect(
+                center_x - button_w // 2, 220, button_w, button_h
+            ),
+            "two_player": pygame.Rect(
+                center_x - button_w // 2, 310, button_w, button_h
+            ),
+            "chess960": pygame.Rect(
+                center_x - button_w // 2, 400, button_w, button_h
+            ),
+            "sandbox": pygame.Rect(
+                center_x - button_w // 2, 490, button_w, button_h
+            ),
         }
 
         self.difficulty_buttons = {
@@ -87,7 +95,11 @@ class PygameChessView(ChessView):
         self.images = {}
         self._promotion_rects = {}
         self._sandbox_palette_rects = {}
-        self.sandbox_toggle_rect = pygame.Rect(self.BOARD_SIZE + 20, self.HEIGHT - 70, 280, 38)
+        self.sandbox_toggle_rect = pygame.Rect(
+            self.BOARD_SIZE + 20, self.HEIGHT - 70, 280, 38
+        )
+
+        self.game_over_back_rect = pygame.Rect(0, 0, 0, 0)
 
         self._load_images()
 
@@ -135,8 +147,12 @@ class PygameChessView(ChessView):
         title = self.title_font.render("Chess in Python", True, self.TEXT)
         self.screen.blit(title, title.get_rect(center=(self.WIDTH // 2, 120)))
 
-        subtitle = self.small_font.render("Choose a mode to start the game", True, self.TEXT)
-        self.screen.blit(subtitle, subtitle.get_rect(center=(self.WIDTH // 2, 170)))
+        subtitle = self.small_font.render(
+            "Choose a mode to start the game", True, self.TEXT
+        )
+        self.screen.blit(
+            subtitle, subtitle.get_rect(center=(self.WIDTH // 2, 170))
+        )
 
         label_map = {
             "one_player": "1 Player",
@@ -147,7 +163,9 @@ class PygameChessView(ChessView):
 
         mouse = pygame.mouse.get_pos()
         for key, rect in self.menu_buttons.items():
-            color = self.BUTTON_HOVER if rect.collidepoint(mouse) else self.BUTTON
+            color = (
+                self.BUTTON_HOVER if rect.collidepoint(mouse) else self.BUTTON
+            )
             pygame.draw.rect(self.screen, color, rect, border_radius=12)
             text = self.menu_font.render(label_map[key], True, self.TEXT)
             self.screen.blit(text, text.get_rect(center=rect.center))
@@ -160,12 +178,18 @@ class PygameChessView(ChessView):
         title = self.title_font.render("Stockfish Difficulty", True, self.TEXT)
         self.screen.blit(title, title.get_rect(center=(self.WIDTH // 2, 120)))
 
-        subtitle = self.small_font.render("Pick how strong you want the engine to be", True, self.TEXT)
-        self.screen.blit(subtitle, subtitle.get_rect(center=(self.WIDTH // 2, 170)))
+        subtitle = self.small_font.render(
+            "Pick how strong you want the engine to be", True, self.TEXT
+        )
+        self.screen.blit(
+            subtitle, subtitle.get_rect(center=(self.WIDTH // 2, 170))
+        )
 
         mouse = pygame.mouse.get_pos()
         for label, rect in self.difficulty_buttons.items():
-            color = self.BUTTON_HOVER if rect.collidepoint(mouse) else self.BUTTON
+            color = (
+                self.BUTTON_HOVER if rect.collidepoint(mouse) else self.BUTTON
+            )
             pygame.draw.rect(self.screen, color, rect, border_radius=12)
             text = self.menu_font.render(label, True, self.TEXT)
             self.screen.blit(text, text.get_rect(center=rect.center))
@@ -193,7 +217,9 @@ class PygameChessView(ChessView):
             self.SQUARE_SIZE - 2 * inset,
         )
         pygame.draw.rect(self.screen, self.LEGAL_FILL, rect, border_radius=10)
-        pygame.draw.rect(self.screen, self.LEGAL_BORDER, rect, 3, border_radius=10)
+        pygame.draw.rect(
+            self.screen, self.LEGAL_BORDER, rect, 3, border_radius=10
+        )
 
     def draw_board(self):
         for row in range(8):
@@ -209,7 +235,7 @@ class PygameChessView(ChessView):
                 pygame.draw.rect(
                     self.screen,
                     color,
-                    (x, y, self.SQUARE_SIZE, self.SQUARE_SIZE)
+                    (x, y, self.SQUARE_SIZE, self.SQUARE_SIZE),
                 )
 
                 if (col, row) in self.board.legal_moves:
@@ -222,7 +248,11 @@ class PygameChessView(ChessView):
                 if piece is None:
                     continue
 
-                if self.board.dragging and self.board.drag_source == "board" and self.board.drag_from == (col, row):
+                if (
+                    self.board.dragging
+                    and self.board.drag_source == "board"
+                    and self.board.drag_from == (col, row)
+                ):
                     continue
 
                 x = col * self.SQUARE_SIZE
@@ -249,7 +279,9 @@ class PygameChessView(ChessView):
         rect = img.get_rect(center=(mx, my))
 
         self.screen.blit(img, rect.topleft)
-        pygame.draw.rect(self.screen, self.DRAG_BORDER, rect, 2, border_radius=8)
+        pygame.draw.rect(
+            self.screen, self.DRAG_BORDER, rect, 2, border_radius=8
+        )
 
     def draw_promotion_box(self):
         if self.board.promotion_pending is None:
@@ -263,7 +295,12 @@ class PygameChessView(ChessView):
         panel_w = self.PANEL_WIDTH - 40
         panel_h = 220
 
-        pygame.draw.rect(self.screen, self.PROMO_BG, (panel_x, panel_y, panel_w, panel_h), border_radius=12)
+        pygame.draw.rect(
+            self.screen,
+            self.PROMO_BG,
+            (panel_x, panel_y, panel_w, panel_h),
+            border_radius=12,
+        )
 
         title = self.small_font.render("Promote pawn", True, self.TEXT)
         self.screen.blit(title, (panel_x + 20, panel_y + 12))
@@ -278,7 +315,9 @@ class PygameChessView(ChessView):
 
         self._promotion_rects = {}
         for i, option in enumerate(options):
-            rect = pygame.Rect(panel_x + 15, panel_y + 42 + i * 42, panel_w - 30, 34)
+            rect = pygame.Rect(
+                panel_x + 15, panel_y + 42 + i * 42, panel_w - 30, 34
+            )
             pygame.draw.rect(self.screen, self.BUTTON, rect, border_radius=8)
 
             key = sprite_keys[option]
@@ -305,8 +344,18 @@ class PygameChessView(ChessView):
 
         self._sandbox_palette_rects = {}
         items = [
-            ("Pawn", "w"), ("Knight", "w"), ("Bishop", "w"), ("Rook", "w"), ("Queen", "w"), ("King", "w"),
-            ("Pawn", "b"), ("Knight", "b"), ("Bishop", "b"), ("Rook", "b"), ("Queen", "b"), ("King", "b"),
+            ("Pawn", "w"),
+            ("Knight", "w"),
+            ("Bishop", "w"),
+            ("Rook", "w"),
+            ("Queen", "w"),
+            ("King", "w"),
+            ("Pawn", "b"),
+            ("Knight", "b"),
+            ("Bishop", "b"),
+            ("Rook", "b"),
+            ("Queen", "b"),
+            ("King", "b"),
         ]
 
         box_size = 44
@@ -315,37 +364,60 @@ class PygameChessView(ChessView):
         for i, (piece_name, color) in enumerate(items):
             row = i // 2
             col = i % 2
-            rect = pygame.Rect(panel_x + col * (box_size + 120), y0 + row * (box_size + gap), box_size, box_size)
+            rect = pygame.Rect(
+                panel_x + col * (box_size + 120),
+                y0 + row * (box_size + gap),
+                box_size,
+                box_size,
+            )
             pygame.draw.rect(self.screen, self.BUTTON, rect, border_radius=8)
 
-            temp_key = color + {
-                "Pawn": "p",
-                "Knight": "n",
-                "Bishop": "b",
-                "Rook": "r",
-                "Queen": "q",
-                "King": "k",
-            }[piece_name]
+            temp_key = (
+                color
+                + {
+                    "Pawn": "p",
+                    "Knight": "n",
+                    "Bishop": "b",
+                    "Rook": "r",
+                    "Queen": "q",
+                    "King": "k",
+                }[piece_name]
+            )
             if temp_key in self.images:
-                icon = pygame.transform.smoothscale(self.images[temp_key], (box_size, box_size))
+                icon = pygame.transform.smoothscale(
+                    self.images[temp_key], (box_size, box_size)
+                )
                 self.screen.blit(icon, rect.topleft)
 
-            label = self.small_font.render(f"{'White' if color == 'w' else 'Black'} {piece_name}", True, self.TEXT)
+            label = self.small_font.render(
+                f"{'White' if color == 'w' else 'Black'} {piece_name}",
+                True,
+                self.TEXT,
+            )
             self.screen.blit(label, (rect.right + 8, rect.y + 10))
             self._sandbox_palette_rects[(piece_name, color)] = rect
 
-        pygame.draw.rect(self.screen, self.BUTTON, self.sandbox_toggle_rect, border_radius=8)
+        pygame.draw.rect(
+            self.screen, self.BUTTON, self.sandbox_toggle_rect, border_radius=8
+        )
         text = self.small_font.render(
-            f"Side to move: {'White' if self.board.sandbox_side_to_move == 'w' else 'Black'}",
+            "Side to move:"
+            f" {'White' if self.board.sandbox_side_to_move == 'w' else 'Black'}",
             True,
             self.TEXT,
         )
-        self.screen.blit(text, text.get_rect(center=self.sandbox_toggle_rect.center))
+        self.screen.blit(
+            text, text.get_rect(center=self.sandbox_toggle_rect.center)
+        )
 
-        hint = self.small_font.render("Right click board square to delete piece", True, self.TEXT)
+        hint = self.small_font.render(
+            "Right click board square to delete piece", True, self.TEXT
+        )
         self.screen.blit(hint, (panel_x, self.sandbox_toggle_rect.y - 35))
 
-        state_text = self.small_font.render(self.board.get_sandbox_state_label(), True, self.TEXT)
+        state_text = self.small_font.render(
+            self.board.get_sandbox_state_label(), True, self.TEXT
+        )
         self.screen.blit(state_text, (panel_x, self.sandbox_toggle_rect.y - 65))
 
     def get_sandbox_palette_choice(self, mouse_pos):
@@ -358,7 +430,7 @@ class PygameChessView(ChessView):
         pygame.draw.rect(
             self.screen,
             self.PANEL_BG,
-            (self.BOARD_SIZE, 0, self.PANEL_WIDTH, self.HEIGHT)
+            (self.BOARD_SIZE, 0, self.PANEL_WIDTH, self.HEIGHT),
         )
 
         title = self.menu_font.render("Chess", True, self.TEXT)
@@ -371,14 +443,20 @@ class PygameChessView(ChessView):
         )
         self.screen.blit(turn_text, (self.BOARD_SIZE + 20, 70))
 
-        mode_text = self.info_font.render(f"Mode: {self.board.mode}", True, self.TEXT)
+        mode_text = self.info_font.render(
+            f"Mode: {self.board.mode}", True, self.TEXT
+        )
         self.screen.blit(mode_text, (self.BOARD_SIZE + 20, 108))
 
         if self.board.mode == "one_player":
-            diff_text = self.info_font.render(f"AI: {self.board.stockfish_label}", True, self.TEXT)
+            diff_text = self.info_font.render(
+                f"AI: {self.board.stockfish_label}", True, self.TEXT
+            )
             self.screen.blit(diff_text, (self.BOARD_SIZE + 20, 146))
 
-            status_text = self.small_font.render(self.board.engine_status, True, self.TEXT)
+            status_text = self.small_font.render(
+                self.board.engine_status, True, self.TEXT
+            )
             self.screen.blit(status_text, (self.BOARD_SIZE + 20, 184))
 
             moves_title_y = 230
@@ -397,16 +475,24 @@ class PygameChessView(ChessView):
         white_x = self.BOARD_SIZE + 55
         black_x = self.BOARD_SIZE + 165
 
-        self.screen.blit(self.small_font.render("#", True, self.TEXT), (num_x, header_y))
-        self.screen.blit(self.small_font.render("White", True, self.TEXT), (white_x, header_y))
-        self.screen.blit(self.small_font.render("Black", True, self.TEXT), (black_x, header_y))
+        self.screen.blit(
+            self.small_font.render("#", True, self.TEXT), (num_x, header_y)
+        )
+        self.screen.blit(
+            self.small_font.render("White", True, self.TEXT),
+            (white_x, header_y),
+        )
+        self.screen.blit(
+            self.small_font.render("Black", True, self.TEXT),
+            (black_x, header_y),
+        )
 
         pygame.draw.line(
             self.screen,
             self.TEXT,
             (self.BOARD_SIZE + 20, header_y + 22),
             (self.WIDTH - 20, header_y + 22),
-            1
+            1,
         )
 
         row_height = 26
@@ -424,9 +510,17 @@ class PygameChessView(ChessView):
 
         for row_index, (idx, white_move, black_move) in enumerate(paired_moves):
             y = start_y + row_index * row_height
-            self.screen.blit(self.small_font.render(str(idx), True, self.TEXT), (num_x, y))
-            self.screen.blit(self.small_font.render(white_move, True, self.TEXT), (white_x, y))
-            self.screen.blit(self.small_font.render(black_move, True, self.TEXT), (black_x, y))
+            self.screen.blit(
+                self.small_font.render(str(idx), True, self.TEXT), (num_x, y)
+            )
+            self.screen.blit(
+                self.small_font.render(white_move, True, self.TEXT),
+                (white_x, y),
+            )
+            self.screen.blit(
+                self.small_font.render(black_move, True, self.TEXT),
+                (black_x, y),
+            )
 
         self.draw_promotion_box()
 
@@ -445,3 +539,44 @@ class PygameChessView(ChessView):
             row = 7 - (y // self.SQUARE_SIZE)
             return col, row
         return None
+
+    def draw_game_over(self):
+        self.screen.fill(self.MENU_BG)
+
+        result = self.board.game_result
+        if result == "checkmate_w":
+            line1 = "Checkmate!"
+            line2 = "White wins"
+        elif result == "checkmate_b":
+            line1 = "Checkmate!"
+            line2 = "Black wins"
+        else:
+            line1 = "Stalemate!"
+            line2 = "It's a draw"
+
+        title = self.title_font.render(line1, True, self.TEXT)
+        self.screen.blit(title, title.get_rect(center=(self.WIDTH // 2, 180)))
+
+        sub = self.menu_font.render(line2, True, self.TEXT)
+        self.screen.blit(sub, sub.get_rect(center=(self.WIDTH // 2, 260)))
+
+        button_w = min(340, self.WIDTH - 120)
+        self.game_over_back_rect = pygame.Rect(
+            self.WIDTH // 2 - button_w // 2, 360, button_w, 60
+        )
+        mouse = pygame.mouse.get_pos()
+        color = (
+            self.BUTTON_HOVER
+            if self.game_over_back_rect.collidepoint(mouse)
+            else self.BUTTON
+        )
+        pygame.draw.rect(
+            self.screen, color, self.game_over_back_rect, border_radius=12
+        )
+
+        btn_text = self.menu_font.render("Back to Menu", True, self.TEXT)
+        self.screen.blit(
+            btn_text, btn_text.get_rect(center=self.game_over_back_rect.center)
+        )
+
+        pygame.display.flip()

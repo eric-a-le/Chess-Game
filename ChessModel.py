@@ -45,7 +45,9 @@ class StockfishAPI:
                 resource_path("stockfish.exe"),
                 resource_path("stockfish/stockfish-windows-x86-64.exe"),
                 resource_path("stockfish/stockfish-windows-x86-64-avx2.exe"),
-                resource_path("stockfish/stockfish-windows-x86-64-sse41-popcnt.exe"),
+                resource_path(
+                    "stockfish/stockfish-windows-x86-64-sse41-popcnt.exe"
+                ),
             ]
         )
 
@@ -132,7 +134,9 @@ class StockfishAPI:
         if self.process is None:
             return
 
-        self.send_command(f"setoption name Skill Level value {self.skill_level}")
+        self.send_command(
+            f"setoption name Skill Level value {self.skill_level}"
+        )
 
         if self.skill_level <= 5:
             self.send_command("setoption name UCI_LimitStrength value true")
@@ -147,7 +151,8 @@ class StockfishAPI:
             self.send_command("setoption name UCI_LimitStrength value false")
 
         self.send_command(
-            f"setoption name UCI_Chess960 value {'true' if chess960 else 'false'}"
+            "setoption name UCI_Chess960 value"
+            f" {'true' if chess960 else 'false'}"
         )
         self.send_command("isready")
         self._wait_for("readyok", timeout_lines=200)
@@ -194,6 +199,12 @@ class ChessModel:
     """
 
     def __init__(self):
+        """
+        UPDATES:
+            _game_result: a string which gets intialized as None. The following
+            valid states for this attribute are "checkmate_w", "checkmate_b",
+            and "stalemate".
+        """
         self._board = [[None] * 8 for _ in range(8)]
         self._turn = "w"
         self._move_number = 1
@@ -214,6 +225,26 @@ class ChessModel:
 
         self._promotion_pending = None
         self._sandbox_side_to_move = "w"
+        self._game_result = None
+
+    def __deepcopy__(self, memo):
+        """
+        Custom deepcopy that skips the Stockfish process, since subprocess
+        objects contain thread locks which cannot be copied.
+        """
+        cls = self.__class__
+        copy_obj = cls.__new__(cls)
+        memo[id(self)] = copy_obj
+
+        for key, value in self.__dict__.items():
+            if key == "_stockfish":
+                # Carry the reference across without copying — the copy is
+                # only used for check simulation and never needs the engine
+                setattr(copy_obj, key, None)
+            else:
+                setattr(copy_obj, key, copy.deepcopy(value, memo))
+
+        return copy_obj
 
     # ----------------------------
     # Setup
@@ -228,6 +259,7 @@ class ChessModel:
         self.reset_selection()
         self.clear_drag()
         self.clear_promotion()
+        self._game_result = None
 
         back_rank = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
 
@@ -249,6 +281,7 @@ class ChessModel:
         self.reset_selection()
         self.clear_drag()
         self.clear_promotion()
+        self._game_result = None
 
     def setup_chess960(self):
         self._board = [[None] * 8 for _ in range(8)]
@@ -259,6 +292,7 @@ class ChessModel:
         self.reset_selection()
         self.clear_drag()
         self.clear_promotion()
+        self._game_result = None
 
         layout = self._generate_960_back_rank()
 
@@ -366,6 +400,9 @@ class ChessModel:
         fen = self.board_to_fen()
         bestmove = self._stockfish.get_best_move(fen)
 
+        if bestmove is None or bestmove == "(none)":
+            return
+
         if bestmove is None or len(bestmove) < 4:
             self._engine_status = "Stockfish returned no move"
             return False
@@ -462,6 +499,10 @@ class ChessModel:
     @property
     def sandbox_side_to_move(self):
         return self._sandbox_side_to_move
+
+    @property
+    def game_result(self):
+        return self._game_result
 
     # ----------------------------
     # Drag state
@@ -596,7 +637,9 @@ class ChessModel:
     # ----------------------------
 
     def toggle_sandbox_side(self):
-        self._sandbox_side_to_move = "b" if self._sandbox_side_to_move == "w" else "w"
+        self._sandbox_side_to_move = (
+            "b" if self._sandbox_side_to_move == "w" else "w"
+        )
 
     def get_sandbox_state_label(self):
         side = "White" if self._sandbox_side_to_move == "w" else "Black"
@@ -667,7 +710,10 @@ class ChessModel:
 
         opponent = "b" if piece.color == "w" else "w"
         if self.is_in_check(opponent):
-            move_text += "+"
+            if not self.has_legal_moves(opponent):
+                move_text += "#"
+            else:
+                move_text += "+"
 
         return move_text
 
@@ -761,7 +807,7 @@ class ChessModel:
         rook_directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
         for index in range(4):
             single_direction = [rook_directions[index]]
-            king_as_rook_moves = king._slide(
+            king_as_rook_moves = king.slide(
                 king_c_pos, king_r_pos, single_direction, self
             )
             if king_as_rook_moves == []:
@@ -780,7 +826,7 @@ class ChessModel:
         bishop_directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
         for index in range(4):
             single_direction = [bishop_directions[index]]
-            king_as_bishop_moves = king._slide(
+            king_as_bishop_moves = king.slide(
                 king_c_pos, king_r_pos, single_direction, self
             )
             if king_as_bishop_moves == []:
@@ -826,4 +872,42 @@ class ChessModel:
                 if isinstance(piece, King) and piece.color == opponent:
                     return True
 
+        return False
+
+    def has_legal_moves(self, color):
+        """
+        Checks to see if the given color has any legal moves left. This is used
+        for both checkmate and stalemate endings for chess.
+
+        Args:
+            color: a string representing the color of the player to check.
+
+        Returns:
+            a boolean representing whether or not the player has legal moves.
+        """
+        for row in range(8):
+            for col in range(8):
+                piece = self.get_piece(col, row)
+                if piece is None or piece.color != color:
+                    continue
+                for end_col, end_row in piece.valid_moves(col, row, self):
+                    if self.is_legal_move(col, row, end_col, end_row):
+                        return True
+        return False
+
+    def check_game_end(self):
+        """
+        Sets _game_result to one of:
+        'checkmate_w' (white wins), 'checkmate_b' (black wins), or 'stalemate'.
+        Returns True if the game has ended, False otherwise.
+        """
+        if not self.has_legal_moves(self._turn):
+            if self.is_in_check(self._turn):
+                # The player whose turn it is has no moves and is in check
+                self._game_result = (
+                    "checkmate_w" if self._turn == "b" else "checkmate_b"
+                )
+            else:
+                self._game_result = "stalemate"
+            return True
         return False
