@@ -241,6 +241,14 @@ class PygameChessView(ChessView):
                 if (col, row) in self.board.legal_moves:
                     self.draw_legal_square(x, y)
 
+                # Highlight the en passant target square when a pawn is selected
+                # and the target is one of its legal moves
+                if (
+                    self.board.en_passant_target == (col, row)
+                    and (col, row) in self.board.legal_moves
+                ):
+                    self.draw_legal_square(x, y)
+
     def draw_pieces(self):
         for row in range(8):
             for col in range(8):

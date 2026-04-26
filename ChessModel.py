@@ -223,6 +223,8 @@ class ChessModel:
         self._drag_mouse_pos = None
         self._drag_source = None
 
+        self._en_passant_target = None  # (col, row) of the square a pawn can capture via en passant, or None
+
         self._promotion_pending = None
         self._sandbox_side_to_move = "w"
         self._game_result = None
@@ -504,6 +506,10 @@ class ChessModel:
     def game_result(self):
         return self._game_result
 
+    @property
+    def en_passant_target(self):
+        return self._en_passant_target
+
     # ----------------------------
     # Drag state
     # ----------------------------
@@ -725,6 +731,16 @@ class ChessModel:
         target = self.get_piece(end_col, end_row)
         captured = target is not None
 
+        # --- En passant capture ---
+        # A pawn moving diagonally to an empty square must be capturing en passant
+        is_en_passant = (
+            isinstance(piece, Pawn) and end_col != start_col and target is None
+        )
+        if is_en_passant:
+            # Remove the captured pawn, which sits on the same row as the moving pawn's start
+            self.clear_square(end_col, start_row)
+            captured = True
+
         if target is not None:
             self._captured_pieces[target.color].append(target)
 
@@ -732,6 +748,14 @@ class ChessModel:
         self.set_piece(start_col, start_row, None)
 
         piece.has_moved = True
+
+        # --- Set en passant target for next move ---
+        # Only set when a pawn advances two squares; clear it in all other cases
+        if isinstance(piece, Pawn) and abs(end_row - start_row) == 2:
+            # The en passant target square is the square the pawn skipped over
+            self._en_passant_target = (end_col, (start_row + end_row) // 2)
+        else:
+            self._en_passant_target = None
 
         if self._mode != "sandbox":
             self._turn = "b" if self._turn == "w" else "w"

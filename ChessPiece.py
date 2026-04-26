@@ -193,5 +193,8 @@ class Pawn(ChessPiece):
                 target = board.get_piece(c, r)
                 if target is not None and target.color != self.color:
                     moves.append((c, r))
+                # En passant capture
+                elif board.en_passant_target == (c, r):
+                    moves.append((c, r))
 
         return moves
