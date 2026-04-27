@@ -156,6 +156,9 @@ class GameController(ChessController):
 
         if self.board.mode != "sandbox" and piece.color != self.board.turn:
             return
+        
+        if self.board.mode == "one_player" and piece.color == "b":
+            return
 
         self.board.selected = (col, row)
         self.board.legal_moves = piece.valid_moves(col, row, self.board)
