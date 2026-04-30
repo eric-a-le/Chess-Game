@@ -10,6 +10,4 @@ permalink: /play/
 - To run the game, type `python main.py`.
 
 # Mouse Controls
-Our game runs on drag and drop. In order to make a move, simply click and drag
-a piece to the desired square. If the move is denied, then it is an illegal
-move.
+Our game runs on drag and drop. In order to make a move, simply click and drag a piece to the desired square. If the move is denied, then it is an illegal move.
