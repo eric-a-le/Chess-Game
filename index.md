@@ -8,3 +8,5 @@ Chess-Game is an implementation of Chess in Python using the pygame library. Che
 ![Giucomo Piano](images/Giuoco%20Piano.png)
 # About Video
 [![Demo Video](https://img.youtube.com/vi/OxG8vesRVgM/hqdefault.jpg)](https://youtu.be/OxG8vesRVgM)
+# Repo Link
+[https://github.com/olincollege/Chess-Game](https://github.com/olincollege/Chess-Game)
